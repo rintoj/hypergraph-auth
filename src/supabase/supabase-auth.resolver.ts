@@ -1,8 +1,8 @@
-import { Args, Context, Mutation, Resolver } from '@nestjs/graphql';
-import { RequestContext } from '../../context';
-import { Public } from '../auth.guard';
-import { SigninResponse } from '../auth.response';
-import { SupabaseAuthService } from './supabase-auth.service';
+import { Args, Context, Mutation, Resolver } from '@nestjs/graphql'
+import { Public } from '../auth.guard'
+import { SigninResponse } from '../auth.response'
+import { RequestContext } from '../common/context'
+import { SupabaseAuthService } from './supabase-auth.service'
 
 @Resolver()
 export class SupabaseAuthResolver {
@@ -15,6 +15,6 @@ export class SupabaseAuthResolver {
     @Args('provider') provider: string,
     @Context() context: RequestContext,
   ) {
-    return this.supabaseService.signinWithCode(code, provider, context.res);
+    return this.supabaseService.signinWithCode(code, provider, context.res)
   }
 }
