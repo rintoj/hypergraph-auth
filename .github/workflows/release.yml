@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@main
       - uses: actions/setup-node@v1
         with:
-          node-version: '18.x'
+          node-version: '20.8.1'
       - run: npm install -g pnpm
       - run: pnpm install
       - run: pnpm run build
