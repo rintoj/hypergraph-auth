@@ -21,9 +21,9 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '18.x'
-      - run: yarn --pure-lockfile
-      - run: yarn run build
-      - run: yarn run semantic-release
+      - run: pnpm --pure-lockfile
+      - run: pnpm run build
+      - run: pnpm run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
