@@ -3,16 +3,16 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
-} from '@nestjs/common';
-import { createClient, Provider, SupabaseClient } from '@supabase/supabase-js';
-import type { Response } from 'express';
-import { UserMetadata } from '../auth.model';
-import { AuthService } from '../auth.service';
-import { SupabaseAuthConfig } from './supabase-auth.config';
+} from '@nestjs/common'
+import { createClient, Provider, SupabaseClient } from '@supabase/supabase-js'
+import type { Response } from 'express'
+import { UserMetadata } from '../auth.model'
+import { AuthService } from '../auth.service'
+import { SupabaseAuthConfig } from './supabase-auth.config'
 
 @Injectable()
 export class SupabaseAuthService {
-  private readonly supabase: SupabaseClient<any, 'public', any>;
+  private readonly supabase: SupabaseClient<any, 'public', any>
 
   constructor(
     private readonly authService: AuthService,
@@ -20,16 +20,12 @@ export class SupabaseAuthService {
   ) {
     this.supabase = createClient(config.supabaseUrl, config.supabaseAnonKey, {
       auth: { flowType: 'pkce' },
-    });
+    })
   }
 
-  async signinWithProvider(
-    host: string,
-    provider: Provider,
-    next: string | undefined,
-  ) {
+  async signinWithProvider(host: string, provider: Provider, next: string | undefined) {
     if (!this.config.providers.includes(provider)) {
-      throw new NotFoundException('Provider not found');
+      throw new NotFoundException('Provider not found')
     }
     return await this.supabase.auth.signInWithOAuth({
       provider,
@@ -40,23 +36,21 @@ export class SupabaseAuthService {
           next,
         },
       },
-    });
+    })
   }
 
   async exchangeCodeForSession(code: string | undefined) {
     if (!code) {
-      throw new UnauthorizedException(
-        'Authorization code is missing. Please provide a valid code.',
-      );
+      throw new UnauthorizedException('Authorization code is missing. Please provide a valid code.')
     }
-    const { data } = await this.supabase.auth.exchangeCodeForSession(code);
+    const { data } = await this.supabase.auth.exchangeCodeForSession(code)
     if (!data?.session?.user) {
       throw new UnauthorizedException(
         'Failed to exchange authorization code for session. Please try again.',
-      );
+      )
     }
-    const user = data.session.user;
-    const provider = `supabase:${user.app_metadata.provider}`;
+    const user = data.session.user
+    const provider = `supabase:${user.app_metadata.provider}`
     const userMetadata: UserMetadata = {
       provider,
       providerId: user.id,
@@ -65,27 +59,22 @@ export class SupabaseAuthService {
       identifier: user.user_metadata?.email,
       phoneNumber: user.user_metadata?.phone_number,
       pictureUrl: user.user_metadata?.avatar_url,
-    };
-    await this.authService.createUser(userMetadata);
+    }
+    await this.authService.createUser(userMetadata)
     const issuedCode = await this.authService.issueAuthCode(
       userMetadata.identifier,
       userMetadata.provider,
-    );
-    return { code: issuedCode, provider };
+    )
+    return { code: issuedCode, provider }
   }
 
   async signinWithCode(code: string, provider: string, response: Response) {
-    const authMetadata = await this.authService.findByAuthCode(code, provider);
+    const authMetadata = await this.authService.findByAuthCode(code, provider)
     if (!authMetadata) {
-      throw new BadRequestException(
-        'Invalid authentication code. Please try again.',
-      );
+      throw new BadRequestException('Invalid authentication code. Please try again.')
     }
-    await this.authService.clearAuthCode(authMetadata.id);
-    const { accessToken, authInfo } = await this.authService.issueTokens(
-      authMetadata.id,
-      response,
-    );
-    return { accessToken, userId: authInfo.userId };
+    await this.authService.clearAuthCode(authMetadata.id)
+    const { accessToken, authInfo } = await this.authService.issueTokens(authMetadata.id, response)
+    return { accessToken, userId: authInfo.userId }
   }
 }

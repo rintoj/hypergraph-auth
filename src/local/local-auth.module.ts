@@ -1,10 +1,10 @@
-import { DynamicModule, Module } from '@nestjs/common';
-import { toNonNullArray } from 'tsds-tools';
-import { AuthModule } from '../auth.module';
-import { LocalAuthConfig } from './local-auth.config';
-import { LocalAuthController } from './local-auth.controller';
-import { LocalAuthResolver } from './local-auth.resolver';
-import { LocalAuthService } from './local-auth.service';
+import { DynamicModule, Module } from '@nestjs/common'
+import { toNonNullArray } from 'tsds-tools'
+import { AuthModule } from '../auth.module'
+import { LocalAuthConfig } from './local-auth.config'
+import { LocalAuthController } from './local-auth.controller'
+import { LocalAuthResolver } from './local-auth.resolver'
+import { LocalAuthService } from './local-auth.service'
 
 @Module({})
 export class LocalAuthModule {
@@ -20,6 +20,6 @@ export class LocalAuthModule {
       controllers: toNonNullArray([
         config.enableRestAPI !== false ? LocalAuthController : undefined,
       ]),
-    };
+    }
   }
 }

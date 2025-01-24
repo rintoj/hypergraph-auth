@@ -1,27 +1,27 @@
-import { StorageModule } from '@hgraph/storage/nestjs';
-import { DynamicModule, Global, Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { toNonNullArray } from 'tsds-tools';
-import { AuthConfig, AuthStrategyType } from './auth.config';
-import { GlobalAuthGuard } from './auth.guard';
-import { AuthMetadata } from './auth.model';
-import { AuthResolver } from './auth.resolver';
-import { AuthService } from './auth.service';
-import { AuthStrategy } from './auth.strategy';
-import { LocalAuthModule } from './local';
-import { SupabaseAuthModule } from './supabase';
+import { StorageModule } from '@hgraph/storage/nestjs'
+import { DynamicModule, Global, Module } from '@nestjs/common'
+import { JwtModule } from '@nestjs/jwt'
+import { PassportModule } from '@nestjs/passport'
+import { toNonNullArray } from 'tsds-tools'
+import { AuthConfig, AuthStrategyType } from './auth.config'
+import { GlobalAuthGuard } from './auth.guard'
+import { AuthMetadata } from './auth.model'
+import { AuthResolver } from './auth.resolver'
+import { AuthService } from './auth.service'
+import { AuthStrategy } from './auth.strategy'
+import { LocalAuthModule } from './local'
+import { SupabaseAuthModule } from './supabase'
 
 @Global()
 @Module({})
 export class AuthModule {
   static async forRoot(config: AuthConfig): Promise<DynamicModule> {
-    const authModules = [];
+    const authModules = []
     for (const strategy of config.strategies) {
       if (strategy.type === AuthStrategyType.Local) {
-        authModules.push(LocalAuthModule.forRoot(strategy));
+        authModules.push(LocalAuthModule.forRoot(strategy))
       } else if (strategy.type === AuthStrategyType.Supabase) {
-        authModules.push(SupabaseAuthModule.forRoot(strategy));
+        authModules.push(SupabaseAuthModule.forRoot(strategy))
       }
     }
     return {
@@ -44,6 +44,6 @@ export class AuthModule {
         }),
         ...authModules,
       ]),
-    };
+    }
   }
 }

@@ -21,5 +21,6 @@
     "paths": {
       "@/*": ["src/*"]
     }
-  }
+  },
+  "exclude": ["node_modules", "src/user", "src/**/*.test.ts"]
 }

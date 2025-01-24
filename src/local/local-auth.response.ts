@@ -1,16 +1,16 @@
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, ObjectType } from '@nestjs/graphql'
 
 @ObjectType()
 export class SignInResponse {
   @Field()
-  accessToken!: string;
+  accessToken!: string
 
   @Field()
-  userId!: string;
+  userId!: string
 }
 
 @ObjectType()
 export class SignUpResponse {
   @Field()
-  userId!: string;
+  userId!: string
 }
