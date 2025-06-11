@@ -13,6 +13,7 @@
     ".": "./dist/index.js",
     "./local": "./dist/local/index.js",
     "./supabase": "./dist/supabase/index.js",
+    "./google": "./dist/google/index.js",
     "./package.json": "./package.json"
   },
   "repository": "https://github.com/rintoj/hypergraph-auth.git",
