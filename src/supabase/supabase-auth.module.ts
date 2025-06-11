@@ -17,6 +17,7 @@ export class SupabaseAuthModule {
         SupabaseAuthResolver,
         { provide: SupabaseAuthConfig, useValue: config },
       ],
+      exports: [SupabaseAuthService],
       controllers: [SupabaseAuthController],
     }
   }

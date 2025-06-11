@@ -33,6 +33,7 @@ export class SupabaseAuthService {
         redirectTo: `${host}/auth/supabase/callback`,
         queryParams: {
           prompt: 'consent',
+          access_type: 'offline',
           next,
         },
       },
