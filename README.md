@@ -47,6 +47,7 @@ import { UserService } from './user/user.service'
 import { AuthModule } from '@hgraph/auth'
 import { createLocalStrategy } from '@hgraph/auth/local'
 import { createSupabaseAuthStrategy } from '@hgraph/auth/supabase'
+import { createGoogleAuthStrategy } from '@hgraph/auth/google'
 
 @Module({
   imports: [
@@ -64,6 +65,11 @@ import { createSupabaseAuthStrategy } from '@hgraph/auth/supabase'
           redirectUrl: config.AUTH_REDIRECT_URL, // URL to redirect after OAuth login
           providers: ['google', 'github', 'facebook'], // Enabled OAuth providers
         }),
+        createGoogleAuthStrategy({
+          clientId: config.GOOGLE_CLIENT_ID,
+          clientSecret: config.GOOGLE_CLIENT_SECRET,
+          redirectUrl: config.GOOGLE_REDIRECT_URL,
+        }),
       ],
       jwtConfig: {
         secret: config.JWT_SECRET, // Secret key for signing JWTs
@@ -80,8 +86,8 @@ export class AppModule {}
 
 **Important Note:** To effectively use the Supabase strategy, you need to configure authentication
 providers within your Supabase project. Please refer to the
-[Supabase Auth documentation](https://www.google.com/url?sa=E&source=gmail&q=https://supabase.com/docs/guides/auth)
-for detailed instructions on setting up providers like Google, GitHub, and Facebook.
+[Supabase Auth documentation](https://supabase.com/docs/guides/auth) for detailed instructions on
+setting up providers like Google, GitHub, and Facebook.
 
 ## API Endpoints: Your Gateway to User Authentication
 
@@ -96,6 +102,9 @@ authentication effectively.
 | `/auth/signin`              | `POST` | Authenticates an existing user with a username and password.                                           | `{ username: string, password: string }` | `{ accessToken: string, userId: string }`     |
 | `/auth/signout`             | `POST` | Logs out the currently authenticated user.                                                             | _None_                                   | _None_                                        |
 | `/auth/supabase/{provider}` | `POST` | Initiates the Supabase authentication flow for the specified provider (e.g., `/auth/supabase/google`). | _None_                                   | _Redirects to provider's authentication page_ |
+| `/auth/google`              | `GET`  | Initiates the Google authentication flow.                                                              | _None_                                   | _Redirects to Google's authentication page_   |
+| `/auth/google/callback`     | `GET`  | Handles the Google authentication callback.                                                            | `{ code: string, state: string }`        | `{ code: string, provider: string }`          |
+| `/auth/google/token`        | `POST` | Exchanges the Google authentication code for an access token.                                          | `{ code: string, provider: string }`     | `{ accessToken: string, userId: string }`     |
 | `/auth/token`               | `POST` | Get token using OAuth Code and provider                                                                | `{ code: string, provider: string }`     | `{ accessToken: string, userId: string }`     |
 
 ### GraphQL API: Flexibility and Power
@@ -264,10 +273,10 @@ export class UserService implements UserServiceSpec {
 Hypergraph Auth provides a robust and flexible solution for implementing authentication in your
 NestJS applications. By following the guidelines and examples in this documentation, you can quickly
 integrate various authentication strategies, manage user data effectively, and focus on building the
-core features of your application. Welcome to a world of seamless and secure user access\!
+core features of your application. Welcome to a world of seamless and secure user access!
 
 ---
 
-**Copyright © 2025 Rinto Jose**
+**Copyright 2025 Rinto Jose**
 
 **Released under the MIT License**

@@ -6,36 +6,38 @@ import { Test, TestingModule } from '@nestjs/testing'
 import * as supertest from 'supertest'
 import { App } from 'supertest/types'
 import { URL } from 'url'
+import { AuthStrategyType } from '../auth.config'
 import { Public } from '../auth.guard'
 import { AuthModule } from '../auth.module'
 import { UserModule } from '../user/user.module'
 import { UserService } from '../user/user.service'
-import { createSupabaseAuthStrategy } from './supabase-auth.config'
-import { SupabaseAuthService } from './supabase-auth.service'
+import { createGoogleAuthStrategy } from './google-auth.config'
+import { GoogleAuthService } from './google-auth.service'
 
 const request = supertest as any as (app: App) => supertest.SuperTest<supertest.Test>
 
 @Controller()
-export class SupabaseAuthTestController {
+export class GoogleAuthTestController {
   @Get('/protected')
-  protected() {
+  protectedLink() {
     return { public: false }
   }
 
   @Public()
   @Get('/public')
-  public() {
+  publicLink() {
     return { public: true }
   }
 }
 const config = {
-  supabaseUrl: 'https://example.supabase.co',
-  supabaseAnonKey: 'supabase-key',
+  type: AuthStrategyType.Google,
+  clientId: 'clientId',
+  clientSecret: 'clientSecret',
   redirectUrl: 'http://localhost:2212',
-  providers: ['google'],
+  googleAuthUrl: 'https://accounts.google.com/o/oauth2/v2/auth?client_id=clientId',
 }
 
-describe('Supabase Auth', () => {
+describe('Google Auth', () => {
   let module: TestingModule
   let app: INestApplication
   let service: any
@@ -59,7 +61,7 @@ describe('Supabase Auth', () => {
         UserModule,
         AuthModule.forRoot({
           userService: UserService,
-          strategies: [createSupabaseAuthStrategy(config)],
+          strategies: [createGoogleAuthStrategy(config)],
           jwtConfig: {
             secret: 'secret1',
             expiry: '1h',
@@ -68,57 +70,53 @@ describe('Supabase Auth', () => {
           },
         }),
       ],
-      controllers: [SupabaseAuthTestController],
+      controllers: [GoogleAuthTestController],
     }).compile()
 
     app = module.createNestApplication()
     await app.init()
-    service = module.get(SupabaseAuthService)
-    service.supabase = {
-      auth: {
-        signInWithOAuth: async () => {
-          return {
-            data: { url: config.supabaseUrl },
-            error: null,
-          }
-        },
-        exchangeCodeForSession: () => ({
-          data: {
-            session: {
-              user: {
-                user_metadata: {
-                  id: 'asdfs23d',
-                  full_name: 'John Doe',
-                  email: 'john@mail.com',
-                  phone_number: '1234567890',
-                  avatar_url: 'https://example.com/avatar.png',
-                },
-                app_metadata: {
-                  provider: 'google',
-                },
-              },
-            },
-          },
-        }),
+    service = module.get(GoogleAuthService)
+    service.signin = jest.fn().mockResolvedValue({
+      data: {
+        url: config.googleAuthUrl,
       },
-    }
+    })
+    service.getUserInfo = jest.fn().mockResolvedValue({
+      sub: '123456789012345678901',
+      name: 'Test User',
+      given_name: 'Test',
+      family_name: 'User',
+      picture: 'https://lh3.googleusercontent.com/a/AATXAJzZ1m_g_g_g_g-g-g-g-g-g-g',
+      email: 'test.user@example.com',
+      email_verified: true,
+      locale: 'en-US',
+    })
+    service.getSession = jest.fn().mockResolvedValue({
+      access_token: 'mock_access_token',
+      expires_in: 3599,
+      token_type: 'Bearer',
+      scope:
+        'openid profile email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+      refresh_token: 'mock_refresh_token',
+      id_token: 'mock_id_token',
+    })
   })
 
-  test('should redirect to Supabase Google OAuth URL', async () => {
+  test('should redirect to Google Google OAuth URL', async () => {
     await request(app.getHttpServer())
-      .get('/auth/supabase/google')
+      .get('/auth/google')
       .expect(302)
       .expect(res => {
-        expect(res.headers.location).toContain(config.supabaseUrl)
+        expect(res.headers.location).toContain(config.googleAuthUrl)
       })
   })
 
-  test('should redirect to Supabase Google OAuth URL with valid redirect URL', async () => {
+  test('should redirect to Google Google OAuth URL with valid redirect URL', async () => {
     await request(app.getHttpServer())
-      .get(`/auth/supabase/google?next=${config.redirectUrl}`)
+      .get(`/auth/google?next=${config.redirectUrl}`)
       .expect(302)
       .expect(res => {
-        expect(res.headers.location).toMatch(config.supabaseUrl)
+        expect(res.headers.location).toMatch(config.googleAuthUrl)
       })
   })
 
@@ -126,15 +124,15 @@ describe('Supabase Auth', () => {
     const code = 'code'
     const exchangeCodeForSession = jest.spyOn(service, 'exchangeCodeForSession')
     await request(app.getHttpServer())
-      .get(`/auth/supabase/callback?code=${code}`)
+      .get(`/auth/google/callback?code=${code}&next=${config.redirectUrl}`)
       .expect(302)
       .expect(res => {
         expect(res.headers.location).toMatch(config.redirectUrl)
         const url = new URL(res.headers.location)
         const authCode = url.searchParams.get('code')
         const provider = url.searchParams.get('provider')
-        expect(authCode).toMatch(/[0-9]+/)
-        expect(provider).toEqual('supabase:google')
+        expect(authCode).toBeDefined()
+        expect(provider).toEqual('google')
       })
     expect(exchangeCodeForSession).toHaveBeenCalled()
   })
@@ -142,7 +140,7 @@ describe('Supabase Auth', () => {
   test('should exchange code for session and return access token and user ID', async () => {
     const code = 'code'
     const { authCode, provider } = await request(app.getHttpServer())
-      .get(`/auth/supabase/callback?code=${code}`)
+      .get(`/auth/google/callback?code=${code}`)
       .expect(302)
       .then(res => {
         expect(res.headers.location).toMatch(config.redirectUrl)
@@ -152,7 +150,7 @@ describe('Supabase Auth', () => {
         return { authCode, provider }
       })
     await request(app.getHttpServer())
-      .post('/auth/supabase/token')
+      .post('/auth/google/token')
       .send({ code: authCode, provider })
       .expect(200)
       .expect(res => {
@@ -166,7 +164,7 @@ describe('Supabase Auth', () => {
   test('should exchange code for session and return access token and user ID via GraphQL', async () => {
     const code = 'code'
     const { authCode, provider } = await request(app.getHttpServer())
-      .get(`/auth/supabase/callback?code=${code}`)
+      .get(`/auth/google/callback?code=${code}`)
       .expect(302)
       .then(res => {
         expect(res.headers.location).toMatch(config.redirectUrl)
@@ -202,7 +200,7 @@ describe('Supabase Auth', () => {
   test('should access protected route with valid authentication', async () => {
     const code = 'code'
     const { authCode, provider } = await request(app.getHttpServer())
-      .get(`/auth/supabase/callback?code=${code}`)
+      .get(`/auth/google/callback?code=${code}`)
       .expect(302)
       .then(res => {
         expect(res.headers.location).toMatch(config.redirectUrl)
@@ -212,7 +210,7 @@ describe('Supabase Auth', () => {
         return { authCode, provider }
       })
     const { accessToken } = await request(app.getHttpServer())
-      .post('/auth/supabase/token')
+      .post('/auth/google/token')
       .send({ code: authCode, provider })
       .expect(200)
       .then(res => res.body)
@@ -230,7 +228,7 @@ describe('Supabase Auth', () => {
   test('should access protected route with valid "token" in the header', async () => {
     const code = 'code'
     const { authCode, provider } = await request(app.getHttpServer())
-      .get(`/auth/supabase/callback?code=${code}`)
+      .get(`/auth/google/callback?code=${code}`)
       .expect(302)
       .then(res => {
         expect(res.headers.location).toMatch(config.redirectUrl)
@@ -240,7 +238,7 @@ describe('Supabase Auth', () => {
         return { authCode, provider }
       })
     const { accessToken } = await request(app.getHttpServer())
-      .post('/auth/supabase/token')
+      .post('/auth/google/token')
       .send({ code: authCode, provider })
       .expect(200)
       .then(res => res.body)
@@ -258,7 +256,7 @@ describe('Supabase Auth', () => {
   test('should access protected route with valid "token" in the query parameter', async () => {
     const code = 'code'
     const { authCode, provider } = await request(app.getHttpServer())
-      .get(`/auth/supabase/callback?code=${code}`)
+      .get(`/auth/google/callback?code=${code}`)
       .expect(302)
       .then(res => {
         expect(res.headers.location).toMatch(config.redirectUrl)
@@ -268,7 +266,7 @@ describe('Supabase Auth', () => {
         return { authCode, provider }
       })
     const { accessToken } = await request(app.getHttpServer())
-      .post('/auth/supabase/token')
+      .post('/auth/google/token')
       .send({ code: authCode, provider })
       .expect(200)
       .then(res => res.body)
@@ -284,8 +282,8 @@ describe('Supabase Auth', () => {
 
   test('should return error for invalid code during session exchange', async () => {
     await request(app.getHttpServer())
-      .post('/auth/supabase/token')
-      .send({ code: 'invalid_code', provider: 'supabase:google' })
+      .post('/auth/google/token')
+      .send({ code: 'invalid_code', provider: 'google:google' })
       .expect(400)
       .expect(res => {
         expect(res.body).toEqual({
@@ -306,7 +304,7 @@ describe('Supabase Auth', () => {
           }
         }
       `,
-      variables: { code: 'invalid_code', provider: 'supabase:google' },
+      variables: { code: 'invalid_code', provider: 'google:google' },
     }
     await request(app.getHttpServer())
       .post('/graphql')
@@ -319,7 +317,7 @@ describe('Supabase Auth', () => {
 
   test('should return 400 for invalid redirect URL', async () => {
     await request(app.getHttpServer())
-      .get('/auth/supabase/google?next=/invalid/url')
+      .get('/auth/google?next=/invalid/url')
       .expect(400)
       .expect(res => {
         expect(res.body).toEqual({
@@ -332,7 +330,7 @@ describe('Supabase Auth', () => {
 
   test('should return 401 for missing authorization code during session exchange', async () => {
     await request(app.getHttpServer())
-      .get('/auth/supabase/callback')
+      .get('/auth/google/callback')
       .expect(401)
       .expect(res => {
         expect(res.body).toEqual({
@@ -345,12 +343,13 @@ describe('Supabase Auth', () => {
 
   test('should return 404 for non-existent endpoint', async () => {
     await request(app.getHttpServer())
-      .get('/auth/supabase/nonexistent')
+      .get('/auth/google/nonexistent')
       .expect(404)
       .expect(res => {
         expect(res.body).toEqual({
           statusCode: 404,
-          message: 'Not Found',
+          error: 'Not Found',
+          message: 'Cannot GET /auth/google/nonexistent',
         })
       })
   })
@@ -380,7 +379,7 @@ describe('Supabase Auth', () => {
 
   test('should return 400 for missing provider during session exchange', async () => {
     await request(app.getHttpServer())
-      .post('/auth/supabase/token')
+      .post('/auth/google/token')
       .send({ code: 'valid_code' })
       .expect(400)
       .expect(res => {

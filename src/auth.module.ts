@@ -9,6 +9,7 @@ import { AuthMetadata } from './auth.model'
 import { AuthResolver } from './auth.resolver'
 import { AuthService } from './auth.service'
 import { AuthStrategy } from './auth.strategy'
+import { GoogleAuthModule } from './google'
 import { LocalAuthModule } from './local'
 import { SupabaseAuthModule } from './supabase'
 
@@ -22,6 +23,8 @@ export class AuthModule {
         authModules.push(LocalAuthModule.forRoot(strategy))
       } else if (strategy.type === AuthStrategyType.Supabase) {
         authModules.push(SupabaseAuthModule.forRoot(strategy))
+      } else if (strategy.type === AuthStrategyType.Google) {
+        authModules.push(GoogleAuthModule.forRoot(strategy))
       }
     }
     return {
