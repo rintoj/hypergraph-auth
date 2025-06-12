@@ -15,6 +15,7 @@ export class GoogleAuthService {
   async signin(
     scopes: string[] = ['openid', 'profile', 'email'],
     redirectUri: string,
+    next: string,
   ): Promise<{ data: { url: string } }> {
     if (!this.config.clientId || !this.config.clientSecret) {
       throw new UnauthorizedException('Missing clientId or clientSecret')
@@ -26,7 +27,7 @@ export class GoogleAuthService {
       scope: scopes.join(' '),
       access_type: 'offline',
       prompt: 'consent',
-      state: redirectUri,
+      state: next,
     })
     const url = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
     return { data: { url } }
@@ -90,15 +91,11 @@ export class GoogleAuthService {
     }
   }
 
-  async exchangeCodeForSession(code: string | undefined) {
+  async exchangeCodeForSession(code: string | undefined, redirectUri: string) {
     if (!code) {
       throw new UnauthorizedException('Authorization code is missing. Please provide a valid code.')
     }
-    const session = await this.getSession({
-      code,
-      type: 'authorization_code',
-      redirectUri: this.config.redirectUrl,
-    })
+    const session = await this.getSession({ code, type: 'authorization_code', redirectUri })
     if (!session || !session.access_token) {
       throw new UnauthorizedException(
         'Failed to exchange authorization code for session. Please try again.',

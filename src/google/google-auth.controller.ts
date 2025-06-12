@@ -27,12 +27,19 @@ export class GoogleAuthController {
     }
   }
 
+  private getRedirectUrl(request: Request): string {
+    const protocol = request.protocol
+    const host = request.get('host')
+    return `${protocol}://${host}/auth/google/callback`
+  }
+
   @Public()
   @Get('/callback')
   async handleCallback(@Req() request: Request, @Res() res: Response) {
     const { code, state: next } = request.query as any
     this.validateNextUrl(next)
-    const output = await this.googleAuthService.exchangeCodeForSession(code)
+    const redirectUri = this.getRedirectUrl(request)
+    const output = await this.googleAuthService.exchangeCodeForSession(code, redirectUri)
     res.redirect(`${next ?? this.config.redirectUrl}?code=${output.code}&provider=google`)
   }
 
@@ -51,7 +58,8 @@ export class GoogleAuthController {
   async signinWithProvider(@Req() request: Request, @Res() res: Response) {
     const { scope, next } = request?.query as any
     this.validateNextUrl(next)
-    const response = await this.googleAuthService.signin(scope, next)
+    const redirectUri = this.getRedirectUrl(request)
+    const response = await this.googleAuthService.signin(scope, redirectUri, next)
     if (!response?.data?.url) {
       throw new InternalServerErrorException('Invalid redirect URL')
     }
