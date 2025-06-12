@@ -2,7 +2,7 @@ export type GetSessionRequest =
   | {
       code: string
       type: 'authorization_code'
-      redirectUri: string | undefined
+      redirectUri: string
     }
   | {
       refreshToken: string

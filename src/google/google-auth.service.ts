@@ -46,13 +46,13 @@ export class GoogleAuthService {
   }
 
   async getSession(request: GetSessionRequest): Promise<GoogleAuthSession> {
-    const { code, refreshToken, type, redirect_uri } = request as any
+    const { code, refreshToken, type, redirectUri } = request as any
     if (!this.config.clientId || !this.config.clientSecret) {
       throw new BadRequestException('Google OAuth client ID and secret are not configured')
     } else if (type === 'authorization_code') {
       if (!code) {
         throw new BadRequestException(`Authorization code is required for "${type}" exchange`)
-      } else if (!redirect_uri) {
+      } else if (!redirectUri) {
         throw new BadRequestException(`Redirect uri is required for "${type}" exchange`)
       }
     } else if (type === 'refresh_token' && !refreshToken) {
@@ -77,7 +77,7 @@ export class GoogleAuthService {
           ? {
               code: code,
               grant_type: 'authorization_code',
-              redirect_uri,
+              redirect_uri: redirectUri,
             }
           : {}),
       }),
