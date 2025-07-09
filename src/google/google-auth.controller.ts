@@ -22,12 +22,15 @@ export class GoogleAuthController {
 
   private validateNextUrl(next: string | undefined) {
     if (!next) return
-    if (!this.config.redirectUrl.split(',').includes(next)) {
+    if (!this.config.webRedirectUrl.split(',').includes(next)) {
       throw new BadRequestException('Invalid redirect URL')
     }
   }
 
   private getRedirectUrl(request: Request): string {
+    if (this.config.redirectUrl) {
+      return this.config.redirectUrl
+    }
     const protocol = request.protocol
     const host = request.get('host')
     return `${protocol}://${host}/auth/google/callback`
@@ -38,9 +41,9 @@ export class GoogleAuthController {
   async handleCallback(@Req() request: Request, @Res() res: Response) {
     const { code, state: next } = request.query as any
     this.validateNextUrl(next)
-    const redirectUri = this.config.webRedirectUrl || this.getRedirectUrl(request)
+    const redirectUri = this.getRedirectUrl(request)
     const output = await this.googleAuthService.exchangeCodeForSession(code, redirectUri)
-    res.redirect(`${next ?? this.config.redirectUrl}?code=${output.code}&provider=google`)
+    res.redirect(`${next ?? this.config.webRedirectUrl}?code=${output.code}&provider=google`)
   }
 
   @Public()
