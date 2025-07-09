@@ -10,8 +10,8 @@ import {
 } from '@nestjs/common'
 import type { Request, Response } from 'express'
 import { Public } from '../auth.guard'
-import { GoogleAuthConfig } from './google-auth.config'
-import { GoogleAuthService } from './google-auth.service'
+import type { GoogleAuthConfig } from './google-auth.config'
+import type { GoogleAuthService } from './google-auth.service'
 
 @Controller('/auth/google')
 export class GoogleAuthController {
@@ -38,7 +38,7 @@ export class GoogleAuthController {
   async handleCallback(@Req() request: Request, @Res() res: Response) {
     const { code, state: next } = request.query as any
     this.validateNextUrl(next)
-    const redirectUri = this.getRedirectUrl(request)
+    const redirectUri = this.config.webRedirectUrl || this.getRedirectUrl(request)
     const output = await this.googleAuthService.exchangeCodeForSession(code, redirectUri)
     res.redirect(`${next ?? this.config.redirectUrl}?code=${output.code}&provider=google`)
   }
