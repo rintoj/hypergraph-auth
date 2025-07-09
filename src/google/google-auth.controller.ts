@@ -10,8 +10,8 @@ import {
 } from '@nestjs/common'
 import type { Request, Response } from 'express'
 import { Public } from '../auth.guard'
-import type { GoogleAuthConfig } from './google-auth.config'
-import type { GoogleAuthService } from './google-auth.service'
+import { GoogleAuthConfig } from './google-auth.config'
+import { GoogleAuthService } from './google-auth.service'
 
 @Controller('/auth/google')
 export class GoogleAuthController {
