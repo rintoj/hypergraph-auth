@@ -12,6 +12,7 @@ import { AuthStrategy } from './auth.strategy'
 import { GoogleAuthModule } from './google'
 import { LocalAuthModule } from './local'
 import { SupabaseAuthModule } from './supabase'
+import { AuthController } from './auth.controller'
 
 @Global()
 @Module({})
@@ -38,6 +39,7 @@ export class AuthModule {
         { provide: 'UserService', useClass: config.userService },
       ]),
       exports: [AuthService],
+      controllers: [AuthController],
       imports: toNonNullArray([
         StorageModule.forFeature([AuthMetadata]),
         PassportModule.register({ defaultStrategy: 'jwt', global: true }),

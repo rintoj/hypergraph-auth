@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt'
 import type { Response } from 'express'
 import { AuthConfig, UserServiceSpec } from './auth.config'
-import { ACCESS_TOKEN } from './auth.input'
+import { ACCESS_TOKEN, REFRESH_TOKEN } from './auth.input'
 import { AuthInfo, AuthMetadata, Credentials, UserMetadata } from './auth.model'
 import { calculateExpiresAt, expirationToSeconds } from './auth.utils'
 
@@ -140,5 +140,6 @@ export class AuthService {
 
   async signout(response: Response) {
     response.clearCookie(ACCESS_TOKEN)
+    response.clearCookie(REFRESH_TOKEN)
   }
 }
