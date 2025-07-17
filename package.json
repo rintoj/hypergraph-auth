@@ -1,6 +1,6 @@
 {
   "name": "@hgraph/auth",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "description": "NestJS based modules for authentication. Supports local (email, username & password) and Supabase authentication.",
